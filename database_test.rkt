@@ -87,6 +87,12 @@ Alec Brunelle, 999241315, 999241315
   3
 )
 
+(test (index-in-list '(1 2) 1) 0)
+
+(test (index-in-list '(1 2) 2) 1)
+
+(test (index-in-list '(1 2) 0) -1)
+
 
 #|
 All tests go below.
@@ -117,11 +123,11 @@ and your TAs will appreciate it!
         (100 #f "Paul")))
 
 ;; Select creates duplicates
-;(test (SELECT '("Name") FROM Teaching)
-;      '(("Name")
-;        ("David")
-;        ("Paul")
-;        ("David")))
+(test (SELECT '("Name") FROM Teaching)
+      '(("Name")
+        ("David")
+        ("Paul")
+        ("David")))
 ;
 ;; Select given a literal table
 ;(test

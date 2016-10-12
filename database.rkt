@@ -38,7 +38,8 @@ Alec Brunelle, brunell3, 999241315
 (provide attributes
          tuples
          size
-         SELECT)
+         SELECT
+         index-in-list)
 
 ; Part 0: Semantic aliases
 
@@ -81,8 +82,9 @@ Alec Brunelle, brunell3, 999241315
   Returns the index of element in the list. Returns -1 if not found.
 |#
 (define (index-in-list list element)
-
-
+  (if
+    (member element list) (- (length list) (length (member element list))) -1
+  )
 )
 
 #|
@@ -97,13 +99,27 @@ Alec Brunelle, brunell3, 999241315
     - tuple:
       - element ordering the same as the ordering in attrs
 |#
-(define (list-ref-table table attrs)
+(define (select-query table attrs)
   (foldl
     (lambda (a b)
-      (display (list-ref (attributes table) a))
+      (append
+        b
+        (list
+          (foldl
+            (lambda (current-attr result-tuple)
+              (append
+                result-tuple
+                (list (list-ref a (index-in-list (attributes table) current-attr)))
+              )
+            )
+            '()
+            attrs
+          )
+        )
+      )
     )
-    table
-    attrs
+    '()
+    (tuples table)
   )
 )
 
@@ -113,7 +129,8 @@ Alec Brunelle, brunell3, 999241315
     (
       (SELECT <attrs> FROM <table>)
       (cond
-        [(list? <attrs>) (list-ref-table <table> <attrs>)]
+        [(empty? <attrs>) '()]
+        [(list? <attrs>) (append (list <attrs>) (select-query <table> <attrs>))]
         [(equal? (id->string <attrs>) "*") <table>]
       )
     )
