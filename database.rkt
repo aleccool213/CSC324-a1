@@ -7,27 +7,32 @@ Alec Brunelle, brunell3, 999241315
 
 ; Function versions for common syntactic forms.
 ; *Use these in your queries instead of the syntactic forms!!!*
-(define (And x y) (and x y))
-(define (Or x y) (or x y))
-(define (If x y z) (if x y z))
+;(define (And x y) (and x y))
+;(define (Or x y) (or x y))
+;(define (If x y z) (if x y z))
 
 ; Correction Oct 5 2016
-;(define-syntax If
-;  (syntax-rules ()
-;  ((If a b c)
-;  (if a b c))))
-;(define-syntax And
-;  (syntax-rules ()
-;     [
-;      (And p q)
-;      (if p q #f)
-;     ]
-;   )
-;)
-;(define-syntax Or
-;  (syntax-rules ()
-;    [(Or p q)
-;     (if p #t q)]))
+(define-syntax If
+  (syntax-rules ()
+  ((If a b c)
+  (if a b c)))
+)
+(define-syntax And
+  (syntax-rules ()
+     [
+      (And p q)
+      (if p q #f)
+     ]
+   )
+)
+(define-syntax Or
+  (syntax-rules ()
+    [
+      (Or p q)
+      (if p #t q)
+    ]
+  )
+)
 
 ; Please do define And, Or as syntactic forms
 ; We have actually done this in class you may use the class code and this week's lab code for this.
@@ -39,7 +44,8 @@ Alec Brunelle, brunell3, 999241315
          tuples
          size
          SELECT
-         index-in-list)
+         index-in-list
+         join-attrs)
 
 ; Part 0: Semantic aliases
 
@@ -124,16 +130,82 @@ Alec Brunelle, brunell3, 999241315
 )
 
 
+#|
+(join-attrs tables-char-id-pairs)
+  tables-char-id-pairs: list of table, char-id pairs
+
+  Returns a list of joined attributes from all of the tables in the order
+  in which it was inputted. If duplicates arise, it use the char-id of the table
+  to uniquely id itself.
+|#
+(define (join-attrs tables char-ids)
+  (foldl
+    (lambda (current-table result)
+      (append
+        result
+        (foldl
+          (lambda (current-attr result)
+            (if
+              ; need to get list of other attributes
+              (member (listofallotherattributesintables) current-attr)
+              ; need to be able to index of iterate over char-ids at the same time
+              (current-char-ids + "." + current-attr)
+              current-attr
+            )
+          )
+          '()
+          (attributes current-table)
+        )
+      )
+    )
+    '()
+    tables
+  )
+)
+
+#|
+(join-table tables)
+  Returns the cartesian-product of the list of tables in table-tuple form.
+  https://piazza.com/class/is1wjow0bqh48n?cid=134
+|#
+;(define (join-table tables)
+;  (display tables)
+;)
+
+
+#|
+(define-syntax SELECT)
+  Defines syntax for SELECT statements
+|#
 (define-syntax SELECT
   (syntax-rules (FROM)
-    (
+    [
       (SELECT <attrs> FROM <table>)
       (cond
         [(empty? <attrs>) '()]
         [(list? <attrs>) (append (list <attrs>) (select-query <table> <attrs>))]
         [(equal? (id->string <attrs>) "*") <table>]
       )
-    )
+    ]
+    [
+      (SELECT <attrs> FROM [<table> <char-id>] ...)
+      (cond
+        [(empty? <attrs>) '()]
+        ;; attributes are joined together, duplicates are changed to
+        ;; <char-id>.<attribute-name>
+        [(equal? (id->string <attrs>) "*")
+          (append
+            (list
+              (join-attrs
+                (list <table> ...)
+                (list <char-id> ...)
+              )
+            )
+            ;(join-table [<table> <char-id>] ...)
+          )
+        ]
+      )
+    ]
   )
 )
 

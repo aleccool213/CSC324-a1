@@ -42,26 +42,56 @@ Alec Brunelle, 999241315, 999241315
     ("David" "CSC343")
     ))
 
-(test (attributes '(1 2 3 4 5))
- 1
-)
 
-(test (attributes
+(define TeachingWithSpecialAttributes
+  '(("Name" "Course.Hello")
+    ("David" "CSC324")
+    ("Paul" "CSC108")
+    ("David" "CSC343")
+    ))
+
+(define DuplicateTeaching
   '(("Name" "Course")
     ("David" "CSC324")
     ("Paul" "CSC108")
     ("David" "CSC343")
-   )
+    ("David" "CSC343")
+    ("David" "CSC343")
+    ))
+
+(define Empty
+  '(("Name" "Age" "LikesChocolate")
+    ))
+
+(define EmptyAttrs
+  '(())
+)
+
+(define One
+  '(("Name" "Age" "LikesChocolate")
+    ("David" "CSC324")
+    ))
+
+(test (attributes
+  Teaching
  )
  '("Name" "Course")
 )
 
+(test (attributes
+  EmptyAttrs
+ )
+ '()
+)
+
+(test (attributes
+  Empty
+ )
+ '("Name" "Age" "LikesChocolate")
+)
+
 (test (tuples
-  '(("Name" "Course")
-    ("David" "CSC324")
-    ("Paul" "CSC108")
-    ("David" "CSC343")
-   )
+  Teaching
   )
   '(
     ("David" "CSC324")
@@ -71,20 +101,39 @@ Alec Brunelle, 999241315, 999241315
 )
 
 (test (tuples
-  '(("Name" "Course")
-   )
+  Empty
+  )
+  '()
+)
+
+(test (tuples
+  EmptyAttrs
   )
   '()
 )
 
 (test (size
-  '(("Name" "Course")
-    ("David" "CSC324")
-    ("Paul" "CSC108")
-    ("David" "CSC343")
-   )
+  Teaching
   )
   3
+)
+
+(test (size
+  Empty
+  )
+  0
+)
+
+(test (size
+  EmptyAttrs
+  )
+  0
+)
+
+(test (size
+  DuplicateTeaching
+  )
+  5
 )
 
 (test (index-in-list '(1 2) 1) 0)
@@ -115,12 +164,66 @@ and your TAs will appreciate it!
         ("Jen" 30 #t)
         ("Paul" 100 #f)))
 
+;; select all in empty tuple table
+(test (SELECT * FROM Empty)
+      '(("Name" "Age" "LikesChocolate")
+        ))
+
+;; select all in empty attribute table
+(test (SELECT * FROM EmptyAttrs)
+      '(()
+        ))
+
+;; select all
+(test (SELECT * FROM One)
+  '(("Name" "Age" "LikesChocolate")
+    ("David" "CSC324")
+   )
+)
+
+;; select all works with duplicate tuples
+(test (SELECT * FROM DuplicateTeaching)
+      '(("Name" "Course")
+        ("David" "CSC324")
+        ("Paul" "CSC108")
+        ("David" "CSC343")
+        ("David" "CSC343")
+        ("David" "CSC343")
+      )
+)
+
 ;; Reordering columns
 (test (SELECT '("Age" "LikesChocolate" "Name") FROM Person)
       '(("Age" "LikesChocolate" "Name")
         (20 #t "David")
         (30 #t "Jen")
         (100 #f "Paul")))
+
+;; Reordering columns again
+(test (SELECT '("LikesChocolate" "Age" "Name") FROM Person)
+      '(("LikesChocolate" "Age" "Name")
+        (#t 20 "David")
+        (#t 30 "Jen")
+        (#f 100 "Paul")))
+
+;; reordering columns with attributes that dont exist
+;; TODO: what do we do in this case?
+(test (SELECT '("LikesChocolate" "Age" "Name" "Gender") FROM Person)
+      '(("LikesChocolate" "Age" "Name" "Gender")
+        (#t 20 "David")
+        (#t 30 "Jen")
+        (#f 100 "Paul")))
+
+;; reordering columns on empty tuple table
+(test (SELECT '("LikesChocolate" "Age" "Name") FROM Empty)
+      '(("LikesChocolate" "Age" "Name")
+        ))
+
+;; reordering columns on empty tuple AND attribute table
+;; TODO: what do we do in this case?
+(test (SELECT '("LikesChocolate" "Age" "Name") FROM EmptyAttrs)
+      '(("LikesChocolate" "Age" "Name")
+        ))
 
 ;; Select creates duplicates
 (test (SELECT '("Name") FROM Teaching)
@@ -130,19 +233,34 @@ and your TAs will appreciate it!
         ("David")))
 ;
 ;; Select given a literal table
-;(test
-; (SELECT '("A" "B")
-;   FROM '(("C" "A" "B" "D")
-;          (1 "Hi" 5 #t)
-;          (2 "Bye" 5 #f)
-;          (3 "Hi" 10 #t)))
-; '(("A" "B")
-;   ("Hi" 5)
-;   ("Bye" 5)
-;   ("Hi" 10)))
-;
+(test
+ (SELECT '("A" "B")
+   FROM '(("C" "A" "B" "D")
+          (1 "Hi" 5 #t)
+          (2 "Bye" 5 #f)
+          (3 "Hi" 10 #t)))
+ '(("A" "B")
+   ("Hi" 5)
+   ("Bye" 5)
+   ("Hi" 10))
+)
+
+
 ;; Select all from two product of two tables
-;(test (SELECT * FROM [Person "P"] [Teaching "T"])
+(test (SELECT * FROM [Person "P"] [Teaching "T"])
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        ("David" 20 #t "David" "CSC324")
+        ("David" 20 #t "Paul" "CSC108")
+        ("David" 20 #t "David" "CSC343")
+        ("Jen" 30 #t "David" "CSC324")
+        ("Jen" 30 #t "Paul" "CSC108")
+        ("Jen" 30 #T "David" "CSC343")
+        ("Paul" 100 #f "David" "CSC324")
+        ("Paul" 100 #f "Paul" "CSC108")
+        ("Paul" 100 #f "David" "CSC343")))
+
+;; Select all from two product of three tables
+;(test (SELECT * FROM [Person "P"] [Teaching "T"] [DuplicateTeaching "D"])
 ;      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
 ;        ("David" 20 #t "David" "CSC324")
 ;        ("David" 20 #t "Paul" "CSC108")
@@ -153,7 +271,7 @@ and your TAs will appreciate it!
 ;        ("Paul" 100 #f "David" "CSC324")
 ;        ("Paul" 100 #f "Paul" "CSC108")
 ;        ("Paul" 100 #f "David" "CSC343")))
-;
+
 ;; Select some from two tables
 ;(test (SELECT '("P.Name" "Course" "Age") FROM [Person "P"] [Teaching "T"])
 ;      '(("P.Name" "Course" "Age")
