@@ -204,8 +204,12 @@ Alec Brunelle, brunell3, 999241315
           (lambda (current)
             (append current-tuple current)
           )
-          ;; TODO
-          (select-query (second tables) (attributes (second tables)))
+          ;; TODO: select-query every table in (rest tables)
+          (if
+            (equal? (length (rest tables)) 1)
+            (select-query (second tables) (attributes (second tables)))
+            (join-table (rest tables))
+          )
         )
       )
     )
