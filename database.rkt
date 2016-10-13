@@ -131,6 +131,25 @@ Alec Brunelle, brunell3, 999241315
 
 
 #|
+(list-of-attrs tables)
+  tables: list of tables
+
+  Returns a list of attributes found in all of the tables
+|#
+(define (list-of-attrs tables)
+  (foldl
+    (lambda (current-table result)
+      (append
+        result
+        (attributes current-table)
+      )
+    )
+    '()
+    tables
+  )
+)
+
+#|
 (join-attrs tables-char-id-pairs)
   tables-char-id-pairs: list of table, char-id pairs
 
@@ -140,17 +159,24 @@ Alec Brunelle, brunell3, 999241315
 |#
 (define (join-attrs tables char-ids)
   (foldl
-    (lambda (current-table result)
+    (lambda (current-table current-char-id result)
       (append
         result
         (foldl
           (lambda (current-attr result)
             (if
-              ; need to get list of other attributes
-              (member (listofallotherattributesintables) current-attr)
-              ; need to be able to index of iterate over char-ids at the same time
-              (current-char-ids + "." + current-attr)
-              current-attr
+              ; if more than twice in the list of attrs, we need to id this column
+              (>
+                (count
+                  (lambda (x)
+                    (equal? x current-attr)
+                  )
+                  (list-of-attrs tables)
+                )
+                1
+              )
+              (append result (list (string-append current-char-id "." current-attr)))
+              (append result (list current-attr))
             )
           )
           '()
@@ -160,6 +186,7 @@ Alec Brunelle, brunell3, 999241315
     )
     '()
     tables
+    char-ids
   )
 )
 
@@ -168,9 +195,24 @@ Alec Brunelle, brunell3, 999241315
   Returns the cartesian-product of the list of tables in table-tuple form.
   https://piazza.com/class/is1wjow0bqh48n?cid=134
 |#
-;(define (join-table tables)
-;  (display tables)
-;)
+(define (join-table tables)
+  (foldl
+    (lambda (current-tuple result)
+      (append
+        result
+        (map
+          (lambda (current)
+            (append current-tuple current)
+          )
+          ;; TODO
+          (select-query (second tables) (attributes (second tables)))
+        )
+      )
+    )
+    '()
+    (select-query (first tables) (attributes (first tables)))
+  )
+)
 
 
 #|
@@ -201,7 +243,9 @@ Alec Brunelle, brunell3, 999241315
                 (list <char-id> ...)
               )
             )
-            ;(join-table [<table> <char-id>] ...)
+            (join-table
+              (list <table> ...)
+            )
           )
         ]
       )
