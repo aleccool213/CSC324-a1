@@ -96,26 +96,25 @@ Alec Brunelle, brunell3, 999241315
 #|
 (list-ref-table table attrs)
   table: a valid table
+  attrs: list of attributes
 
   Returns a table with attrs ordered the same as attrs.
-
-  Notes:
-  - build a new table with:
-    - attrs as the first list element
-    - tuple:
-      - element ordering the same as the ordering in attrs
 |#
 (define (select-query table attrs)
   (foldl
-    (lambda (a b)
+    (lambda (current-tuple result)
       (append
-        b
+        result
         (list
           (foldl
             (lambda (current-attr result-tuple)
               (append
                 result-tuple
-                (list (list-ref a (index-in-list (attributes table) current-attr)))
+                (list
+                  (list-ref
+                    current-tuple
+                    (index-in-list (attributes table) current-attr))
+                )
               )
             )
             '()
@@ -192,7 +191,13 @@ Alec Brunelle, brunell3, 999241315
 
 #|
 (join-table tables)
+  tables: list of tables
+  attributes: list of attributes
+
   Returns the cartesian-product of the list of tables in table-tuple form.
+  If attributes list is inputted, shows only those attributes.
+
+  cartesian-product with three sets explanation:
   https://piazza.com/class/is1wjow0bqh48n?cid=134
 |#
 (define (join-table tables)
@@ -214,7 +219,10 @@ Alec Brunelle, brunell3, 999241315
       )
     )
     '()
-    (select-query (first tables) (attributes (first tables)))
+    (select-query
+      (first tables)
+      (attributes (first tables))
+    )
   )
 )
 
@@ -237,9 +245,30 @@ Alec Brunelle, brunell3, 999241315
       (SELECT <attrs> FROM [<table> <char-id>] ...)
       (cond
         [(empty? <attrs>) '()]
+        [
+          (list? <attrs>)
+          (append
+            (list <attrs>)
+            (select-query
+              (append
+                (list
+                  (join-attrs
+                    (list <table> ...)
+                    (list <char-id> ...)
+                  )
+                )
+                (join-table
+                  (list <table> ...)
+                )
+              )
+              <attrs>
+            )
+          )
+        ]
         ;; attributes are joined together, duplicates are changed to
         ;; <char-id>.<attribute-name>
-        [(equal? (id->string <attrs>) "*")
+        [
+          (equal? (id->string <attrs>) "*")
           (append
             (list
               (join-attrs

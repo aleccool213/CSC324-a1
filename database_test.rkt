@@ -246,7 +246,7 @@ and your TAs will appreciate it!
 )
 
 
-;; Select all from two product of two tables
+; Select all from two product of two tables
 (test (SELECT * FROM [Person "P"] [Teaching "T"])
       '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
         ("David" 20 #t "David" "CSC324")
@@ -261,7 +261,7 @@ and your TAs will appreciate it!
 
 ;; Select all from two product of three tables
 (test (SELECT * FROM [Person "P"] [Teaching "T"] [Person "D"])
-      '(("P.Name" "Age" "LikesChocolate" "T.Name" "T.Course" "D.Name" "D.Course" "D.LikesChocolate")
+      '(("P.Name" "P.Age" "P.LikesChocolate" "T.Name" "Course" "D.Name" "D.Age" "D.LikesChocolate")
         ("David" 20 #t "David" "CSC324" "David" 20 #t)
         ("David" 20 #t "David" "CSC324" "Jen" 30 #t)
         ("David" 20 #t "David" "CSC324" "Paul" 100 #f)
@@ -292,53 +292,54 @@ and your TAs will appreciate it!
       )
 )
 
-;; Select some from two tables
-;(test (SELECT '("P.Name" "Course" "Age") FROM [Person "P"] [Teaching "T"])
-;      '(("P.Name" "Course" "Age")
-;        ("David" "CSC324" 20)
-;        ("David" "CSC108" 20)
-;        ("David" "CSC343" 20)
-;        ("Jen" "CSC324" 30)
-;        ("Jen" "CSC108" 30)
-;        ("Jen" "CSC343" 30)
-;        ("Paul" "CSC324" 100)
-;        ("Paul" "CSC108" 100)
-;        ("Paul" "CSC343" 100)))
+
+; Select some from two tables
+(test (SELECT '("P.Name" "Course" "Age") FROM [Person "P"] [Teaching "T"])
+      '(("P.Name" "Course" "Age")
+        ("David" "CSC324" 20)
+        ("David" "CSC108" 20)
+        ("David" "CSC343" 20)
+        ("Jen" "CSC324" 30)
+        ("Jen" "CSC108" 30)
+        ("Jen" "CSC343" 30)
+        ("Paul" "CSC324" 100)
+        ("Paul" "CSC108" 100)
+        ("Paul" "CSC343" 100)))
 ;
 ;; Take the product of a table with itself
-;(test (SELECT '("E.Course" "E1.Course") FROM [Teaching "E1"] [Teaching "E"])
-;      '(("E.Course" "E1.Course")
-;        ("CSC324" "CSC324")
-;        ("CSC108" "CSC324")
-;        ("CSC343" "CSC324")
-;        ("CSC324" "CSC108")
-;        ("CSC108" "CSC108")
-;        ("CSC343" "CSC108")
-;        ("CSC324" "CSC343")
-;        ("CSC108" "CSC343")
-;        ("CSC343" "CSC343")))
+(test (SELECT '("E.Course" "E1.Course") FROM [Teaching "E1"] [Teaching "E"])
+      '(("E.Course" "E1.Course")
+        ("CSC324" "CSC324")
+        ("CSC108" "CSC324")
+        ("CSC343" "CSC324")
+        ("CSC324" "CSC108")
+        ("CSC108" "CSC108")
+        ("CSC343" "CSC108")
+        ("CSC324" "CSC343")
+        ("CSC108" "CSC343")
+        ("CSC343" "CSC343")))
 ;
 ;; Take the product of a literal table with an identifier
-;(test
-; (SELECT *
-;   FROM ['(("Age" "A" "Name" "D")
-;           (1 "Hi" 5 #t)
-;           (2 "Bye" 5 #f)
-;           (3 "Hi" 10 #t))
-;         "T1"]
-;        [Person "T2"])
-; '(("T1.Age" "A" "T1.Name" "D" "T2.Name" "T2.Age" "LikesChocolate")
-;   (1 "Hi" 5 #t "David" 20 #t)
-;   (1 "Hi" 5 #t "Jen" 30 #t)
-;   (1 "Hi" 5 #t "Paul" 100 #f)
-;   (2 "Bye" 5 #f "David" 20 #t)
-;   (2 "Bye" 5 #f "Jen" 30 #t)
-;   (2 "Bye" 5 #f "Paul" 100 #f)
-;   (3 "Hi" 10 #t "David" 20 #t)
-;   (3 "Hi" 10 #t "Jen" 30 #t)
-;   (3 "Hi" 10 #t "Paul" 100 #f)))
-;
-;
+(test
+ (SELECT *
+   FROM ['(("Age" "A" "Name" "D")
+           (1 "Hi" 5 #t)
+           (2 "Bye" 5 #f)
+           (3 "Hi" 10 #t))
+         "T1"]
+        [Person "T2"])
+ '(("T1.Age" "A" "T1.Name" "D" "T2.Name" "T2.Age" "LikesChocolate")
+   (1 "Hi" 5 #t "David" 20 #t)
+   (1 "Hi" 5 #t "Jen" 30 #t)
+   (1 "Hi" 5 #t "Paul" 100 #f)
+   (2 "Bye" 5 #f "David" 20 #t)
+   (2 "Bye" 5 #f "Jen" 30 #t)
+   (2 "Bye" 5 #f "Paul" 100 #f)
+   (3 "Hi" 10 #t "David" 20 #t)
+   (3 "Hi" 10 #t "Jen" 30 #t)
+   (3 "Hi" 10 #t "Paul" 100 #f)))
+
+
 ;; ---- WHERE ----
 ;; Attribute as condition, select all
 ;(test (SELECT *
