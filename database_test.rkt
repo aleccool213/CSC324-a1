@@ -143,6 +143,26 @@ Alec Brunelle, 999241315, 999241315
 (test (index-in-list '(1 2) 0) -1)
 
 
+(test (tuple-statisfy (lambda (x) (equal? x #t)) Teaching)
+  '(("Name" "Course")
+    )
+)
+
+(test (tuple-statisfy (lambda (x) (equal? (list-ref x 1) "CSC324")) Teaching)
+  '(("Name" "Course")
+    ("David" "CSC324")
+   )
+)
+
+(test
+  (
+    (replace-attr "Course" (list "Name" "Course"))
+    (list "David" "CSC324")
+  )
+  "CSC324"
+)
+
+
 #|
 All tests go below.
 We have divided our tests into five sections:
@@ -342,20 +362,21 @@ and your TAs will appreciate it!
 
 ;; ---- WHERE ----
 ;; Attribute as condition, select all
-;(test (SELECT *
-;        FROM Person
-;        WHERE "LikesChocolate")
-;      '(("Name" "Age" "LikesChocolate")
-;        ("David" 20 #t)
-;        ("Jen" 30 #t)))
+(test (SELECT *
+        FROM Person
+        WHERE "LikesChocolate")
+  '(("Name" "Age" "LikesChocolate")
+    ("David" 20 #t)
+    ("Jen" 30 #t))
+)
 ;
 ;; Attribute as condition, select subset
-;(test (SELECT '("LikesChocolate" "Name")
-;        FROM Person
-;        WHERE "LikesChocolate")
-;      '(("LikesChocolate" "Name")
-;        (#t "David")
-;        (#t "Jen")))
+(test (SELECT '("LikesChocolate" "Name")
+        FROM Person
+        WHERE "LikesChocolate")
+      '(("LikesChocolate" "Name")
+        (#t "David")
+        (#t "Jen")))
 ;
 ;; Condition as function of one attribute, select all
 ;(test (SELECT *

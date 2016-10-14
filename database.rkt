@@ -45,7 +45,9 @@ Alec Brunelle, brunell3, 999241315
          size
          SELECT
          index-in-list
-         join-attrs)
+         join-attrs
+         tuple-statisfy
+         replace-attr)
 
 ; Part 0: Semantic aliases
 
@@ -232,13 +234,27 @@ Alec Brunelle, brunell3, 999241315
   Defines syntax for SELECT statements
 |#
 (define-syntax SELECT
-  (syntax-rules (FROM)
+  (syntax-rules (FROM WHERE)
     [
       (SELECT <attrs> FROM <table>)
       (cond
         [(empty? <attrs>) '()]
         [(list? <attrs>) (append (list <attrs>) (select-query <table> <attrs>))]
         [(equal? (id->string <attrs>) "*") <table>]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM <table> WHERE <where-attrs> ...)
+      (cond
+        [(empty? <attrs>) '()]
+        [
+          (list? <attrs>)
+          (append (list <attrs>) (select-query (filter-tuples <table> <where-attrs> ...) <attrs>))
+        ]
+        [
+          (equal? (id->string <attrs>) "*")
+          (filter-tuples <table> <where-attrs> ...)
+        ]
       )
     ]
     [
@@ -286,6 +302,25 @@ Alec Brunelle, brunell3, 999241315
   )
 )
 
+#|
+  filter-tuples
+
+  table: a valid table
+  where-clauses: a list of ether strings or functions
+
+  note: functions must have string-literals corresponding to attributes
+
+  returns: a table where tuples must satisfy (equal? <attribute-in-tuple> #t)
+  or satisfy the function
+|#
+(define (filter-tuples table where-clauses)
+  ; is the third item in the list #t?
+  (tuple-statisfy
+    (replace-attr where-clauses (attributes table))
+    table
+  )
+)
+
 ; Part I "WHERE" helpers; you may or may not wish to implement these.
 
 #|
@@ -305,6 +340,21 @@ A function that takes:
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
 |#
+(define (tuple-statisfy f table)
+  (append
+    (list (attributes table))
+    (foldl
+      (lambda (current-tuple result)
+        (append
+          result
+          (if (f current-tuple) (list current-tuple) '())
+        )
+      )
+      '()
+      (tuples table)
+    )
+  )
+)
 
 #|
 A function 'replace-attr' that takes:
@@ -316,21 +366,11 @@ A function 'replace-attr' that takes:
       in the tuple.
     - Otherwise, just ignore the tuple and return 'x'.
 |#
-
-
-; Starter for Part 3; feel free to ignore!
-
-; What should this macro do?
-(define-syntax replace
-  (syntax-rules ()
-    ; The recursive step, when given a compound expression
-    [(replace (expr ...) table)
-     ; Change this!
-     (void)]
-    ; The base case, when given just an atom. This is easier!
-    [(replace atom table)
-     ; Change this!
-     (void)]))
+(define (replace-attr x attributes)
+  (lambda (tuple)
+    (if (> (index-in-list attributes x) 0) (list-ref tuple (index-in-list attributes x)) x)
+  )
+)
 
 (define-syntax id->string
  (syntax-rules ()
