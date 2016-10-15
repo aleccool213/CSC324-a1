@@ -266,7 +266,6 @@ A function that takes:
     (list (attributes table))
     (foldl
       (lambda (current-tuple result)
-        (display (f current-tuple))
         (append
           result
           (if
@@ -331,7 +330,7 @@ A function 'replace-attr' that takes:
           (replace-attr-expression
             (replace (attr ...) table)
             (lambda (x)
-              (expr x 50)
+              (expr x attr ...)
             )
           )
         ]
@@ -348,6 +347,7 @@ A function 'replace-attr' that takes:
             (attributes table)
           )
         ]
+        [else (replace (attr ...) table)]
       )
     ]
     [
@@ -415,15 +415,12 @@ A function 'replace-attr' that takes:
         ]
         [
           (equal? (id->string <attrs>) "*")
-          (filter-tuples
-            <table>
-            (tuple-statisfy
-              (replace
-                <where-attr>
-                <table>
-              )
+          (tuple-statisfy
+            (replace
+              <where-attr>
               <table>
             )
+            <table>
           )
         ]
       )
