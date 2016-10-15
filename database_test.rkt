@@ -71,284 +71,284 @@ Alec Brunelle, 999241315, 999241315
   '(("Name" "Age" "LikesChocolate")
     ("David" "CSC324")
     ))
-
-(test (attributes
-  Teaching
- )
- '("Name" "Course")
-)
-
-(test (attributes
-  EmptyAttrs
- )
- '()
-)
-
-(test (attributes
-  Empty
- )
- '("Name" "Age" "LikesChocolate")
-)
-
-(test (tuples
-  Teaching
-  )
-  '(
-    ("David" "CSC324")
-    ("Paul" "CSC108")
-    ("David" "CSC343")
-   )
-)
-
-(test (tuples
-  Empty
-  )
-  '()
-)
-
-(test (tuples
-  EmptyAttrs
-  )
-  '()
-)
-
-(test (size
-  Teaching
-  )
-  3
-)
-
-(test (size
-  Empty
-  )
-  0
-)
-
-(test (size
-  EmptyAttrs
-  )
-  0
-)
-
-(test (size
-  DuplicateTeaching
-  )
-  5
-)
-
-(test (index-in-list '(1 2) 1) 0)
-
-(test (index-in-list '(1 2) 2) 1)
-
-(test (index-in-list '(1 2) 0) -1)
-
-
-(test (tuple-statisfy (lambda (x) (equal? x #t)) Teaching)
-  '(("Name" "Course")
-    )
-)
-
-(test (tuple-statisfy (lambda (x) (equal? (list-ref x 1) "CSC324")) Teaching)
-  '(("Name" "Course")
-    ("David" "CSC324")
-   )
-)
-
-(test
-  (
-    (replace-attr "Course" (list "Name" "Course"))
-    (list "David" "CSC324")
-  )
-  "CSC324"
-)
-
-(test
-  (where-helper (list "Name" "Age" "LikesChocolate") "Age" (list "David" 20 #t))
-  20
-)
-
-
-#|
-All tests go below.
-We have divided our tests into five sections:
-- No WHERE/ORDER BY
-- WHERE clause, but no ORDER BY
-- ORDER BY clause, but no WHERE
-- Both WHERE and ORDER BY
-- Nested queries
-
-Please respect this categorization when you add your tests,
-and your TAs will appreciate it!
-|#
-
-; ---- SELECT/FROM tests ----
-; Select all
-(test (SELECT * FROM Person)
-      '(("Name" "Age" "LikesChocolate")
-        ("David" 20 #t)
-        ("Jen" 30 #t)
-        ("Paul" 100 #f)))
-
-;; select all in empty tuple table
-(test (SELECT * FROM Empty)
-      '(("Name" "Age" "LikesChocolate")
-        ))
-
-;; select all in empty attribute table
-(test (SELECT * FROM EmptyAttrs)
-      '(()
-        ))
-
-;; select all
-(test (SELECT * FROM One)
-  '(("Name" "Age" "LikesChocolate")
-    ("David" "CSC324")
-   )
-)
-
-;; select all works with duplicate tuples
-(test (SELECT * FROM DuplicateTeaching)
-      '(("Name" "Course")
-        ("David" "CSC324")
-        ("Paul" "CSC108")
-        ("David" "CSC343")
-        ("David" "CSC343")
-        ("David" "CSC343")
-      )
-)
-
-;; Reordering columns
-(test (SELECT '("Age" "LikesChocolate" "Name") FROM Person)
-      '(("Age" "LikesChocolate" "Name")
-        (20 #t "David")
-        (30 #t "Jen")
-        (100 #f "Paul")))
-
-;; Reordering columns again
-(test (SELECT '("LikesChocolate" "Age" "Name") FROM Person)
-      '(("LikesChocolate" "Age" "Name")
-        (#t 20 "David")
-        (#t 30 "Jen")
-        (#f 100 "Paul")))
-
-;; reordering columns on empty tuple table
-(test (SELECT '("LikesChocolate" "Age" "Name") FROM Empty)
-      '(("LikesChocolate" "Age" "Name")
-        ))
-
-;; Select creates duplicates
-(test (SELECT '("Name") FROM Teaching)
-      '(("Name")
-        ("David")
-        ("Paul")
-        ("David")))
 ;
-;; Select given a literal table
-(test
- (SELECT '("A" "B")
-   FROM '(("C" "A" "B" "D")
-          (1 "Hi" 5 #t)
-          (2 "Bye" 5 #f)
-          (3 "Hi" 10 #t)))
- '(("A" "B")
-   ("Hi" 5)
-   ("Bye" 5)
-   ("Hi" 10))
-)
-
-
-; Select all from two product of two tables
-(test (SELECT * FROM [Person "P"] [Teaching "T"])
-      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
-        ("David" 20 #t "David" "CSC324")
-        ("David" 20 #t "Paul" "CSC108")
-        ("David" 20 #t "David" "CSC343")
-        ("Jen" 30 #t "David" "CSC324")
-        ("Jen" 30 #t "Paul" "CSC108")
-        ("Jen" 30 #t "David" "CSC343")
-        ("Paul" 100 #f "David" "CSC324")
-        ("Paul" 100 #f "Paul" "CSC108")
-        ("Paul" 100 #f "David" "CSC343")))
-
-;; Select all from two product of three tables
-(test (SELECT * FROM [Person "P"] [Teaching "T"] [Person "D"])
-      '(("P.Name" "P.Age" "P.LikesChocolate" "T.Name" "Course" "D.Name" "D.Age" "D.LikesChocolate")
-        ("David" 20 #t "David" "CSC324" "David" 20 #t)
-        ("David" 20 #t "David" "CSC324" "Jen" 30 #t)
-        ("David" 20 #t "David" "CSC324" "Paul" 100 #f)
-        ("David" 20 #t "Paul" "CSC108" "David" 20 #t)
-        ("David" 20 #t "Paul" "CSC108" "Jen" 30 #t)
-        ("David" 20 #t "Paul" "CSC108" "Paul" 100 #f)
-        ("David" 20 #t "David" "CSC343" "David" 20 #t)
-        ("David" 20 #t "David" "CSC343" "Jen" 30 #t)
-        ("David" 20 #t "David" "CSC343" "Paul" 100 #f)
-        ("Jen" 30 #t "David" "CSC324" "David" 20 #t)
-        ("Jen" 30 #t "David" "CSC324" "Jen" 30 #t)
-        ("Jen" 30 #t "David" "CSC324" "Paul" 100 #f)
-        ("Jen" 30 #t "Paul" "CSC108" "David" 20 #t)
-        ("Jen" 30 #t "Paul" "CSC108" "Jen" 30 #t)
-        ("Jen" 30 #t "Paul" "CSC108" "Paul" 100 #f)
-        ("Jen" 30 #t "David" "CSC343" "David" 20 #t)
-        ("Jen" 30 #t "David" "CSC343" "Jen" 30 #t)
-        ("Jen" 30 #t "David" "CSC343" "Paul" 100 #f)
-        ("Paul" 100 #f "David" "CSC324" "David" 20 #t)
-        ("Paul" 100 #f "David" "CSC324" "Jen" 30 #t)
-        ("Paul" 100 #f "David" "CSC324" "Paul" 100 #f)
-        ("Paul" 100 #f "Paul" "CSC108" "David" 20 #t)
-        ("Paul" 100 #f "Paul" "CSC108" "Jen" 30 #t)
-        ("Paul" 100 #f "Paul" "CSC108" "Paul" 100 #f)
-        ("Paul" 100 #f "David" "CSC343" "David" 20 #t)
-        ("Paul" 100 #f "David" "CSC343" "Jen" 30 #t)
-        ("Paul" 100 #f "David" "CSC343" "Paul" 100 #f)
-      )
-)
-
-
-; Select some from two tables
-(test (SELECT '("P.Name" "Course" "Age") FROM [Person "P"] [Teaching "T"])
-      '(("P.Name" "Course" "Age")
-        ("David" "CSC324" 20)
-        ("David" "CSC108" 20)
-        ("David" "CSC343" 20)
-        ("Jen" "CSC324" 30)
-        ("Jen" "CSC108" 30)
-        ("Jen" "CSC343" 30)
-        ("Paul" "CSC324" 100)
-        ("Paul" "CSC108" 100)
-        ("Paul" "CSC343" 100)))
+;(test (attributes
+;  Teaching
+; )
+; '("Name" "Course")
+;)
 ;
-;; Take the product of a table with itself
-(test (SELECT '("E.Course" "E1.Course") FROM [Teaching "E1"] [Teaching "E"])
-      '(("E.Course" "E1.Course")
-        ("CSC324" "CSC324")
-        ("CSC108" "CSC324")
-        ("CSC343" "CSC324")
-        ("CSC324" "CSC108")
-        ("CSC108" "CSC108")
-        ("CSC343" "CSC108")
-        ("CSC324" "CSC343")
-        ("CSC108" "CSC343")
-        ("CSC343" "CSC343")))
+;(test (attributes
+;  EmptyAttrs
+; )
+; '()
+;)
 ;
-;; Take the product of a literal table with an identifier
-(test
- (SELECT *
-   FROM ['(("Age" "A" "Name" "D")
-           (1 "Hi" 5 #t)
-           (2 "Bye" 5 #f)
-           (3 "Hi" 10 #t))
-         "T1"]
-        [Person "T2"])
- '(("T1.Age" "A" "T1.Name" "D" "T2.Name" "T2.Age" "LikesChocolate")
-   (1 "Hi" 5 #t "David" 20 #t)
-   (1 "Hi" 5 #t "Jen" 30 #t)
-   (1 "Hi" 5 #t "Paul" 100 #f)
-   (2 "Bye" 5 #f "David" 20 #t)
-   (2 "Bye" 5 #f "Jen" 30 #t)
-   (2 "Bye" 5 #f "Paul" 100 #f)
-   (3 "Hi" 10 #t "David" 20 #t)
-   (3 "Hi" 10 #t "Jen" 30 #t)
-   (3 "Hi" 10 #t "Paul" 100 #f)))
+;(test (attributes
+;  Empty
+; )
+; '("Name" "Age" "LikesChocolate")
+;)
+;
+;(test (tuples
+;  Teaching
+;  )
+;  '(
+;    ("David" "CSC324")
+;    ("Paul" "CSC108")
+;    ("David" "CSC343")
+;   )
+;)
+;
+;(test (tuples
+;  Empty
+;  )
+;  '()
+;)
+;
+;(test (tuples
+;  EmptyAttrs
+;  )
+;  '()
+;)
+;
+;(test (size
+;  Teaching
+;  )
+;  3
+;)
+;
+;(test (size
+;  Empty
+;  )
+;  0
+;)
+;
+;(test (size
+;  EmptyAttrs
+;  )
+;  0
+;)
+;
+;(test (size
+;  DuplicateTeaching
+;  )
+;  5
+;)
+;
+;(test (index-in-list '(1 2) 1) 0)
+;
+;(test (index-in-list '(1 2) 2) 1)
+;
+;(test (index-in-list '(1 2) 0) -1)
+;
+;
+;(test (tuple-statisfy (lambda (x) (equal? x #t)) Teaching)
+;  '(("Name" "Course")
+;    )
+;)
+;
+;(test (tuple-statisfy (lambda (x) (equal? (list-ref x 1) "CSC324")) Teaching)
+;  '(("Name" "Course")
+;    ("David" "CSC324")
+;   )
+;)
+;
+;(test
+;  (
+;    (replace-attr "Course" (list "Name" "Course"))
+;    (list "David" "CSC324")
+;  )
+;  "CSC324"
+;)
+;
+;(test
+;  (where-helper (list "Name" "Age" "LikesChocolate") "Age" (list "David" 20 #t))
+;  20
+;)
+;
+;
+;#|
+;All tests go below.
+;We have divided our tests into five sections:
+;- No WHERE/ORDER BY
+;- WHERE clause, but no ORDER BY
+;- ORDER BY clause, but no WHERE
+;- Both WHERE and ORDER BY
+;- Nested queries
+;
+;Please respect this categorization when you add your tests,
+;and your TAs will appreciate it!
+;|#
+;
+;; ---- SELECT/FROM tests ----
+;; Select all
+;(test (SELECT * FROM Person)
+;      '(("Name" "Age" "LikesChocolate")
+;        ("David" 20 #t)
+;        ("Jen" 30 #t)
+;        ("Paul" 100 #f)))
+;
+;;; select all in empty tuple table
+;(test (SELECT * FROM Empty)
+;      '(("Name" "Age" "LikesChocolate")
+;        ))
+;
+;;; select all in empty attribute table
+;(test (SELECT * FROM EmptyAttrs)
+;      '(()
+;        ))
+;
+;;; select all
+;(test (SELECT * FROM One)
+;  '(("Name" "Age" "LikesChocolate")
+;    ("David" "CSC324")
+;   )
+;)
+;
+;;; select all works with duplicate tuples
+;(test (SELECT * FROM DuplicateTeaching)
+;      '(("Name" "Course")
+;        ("David" "CSC324")
+;        ("Paul" "CSC108")
+;        ("David" "CSC343")
+;        ("David" "CSC343")
+;        ("David" "CSC343")
+;      )
+;)
+;
+;;; Reordering columns
+;(test (SELECT '("Age" "LikesChocolate" "Name") FROM Person)
+;      '(("Age" "LikesChocolate" "Name")
+;        (20 #t "David")
+;        (30 #t "Jen")
+;        (100 #f "Paul")))
+;
+;;; Reordering columns again
+;(test (SELECT '("LikesChocolate" "Age" "Name") FROM Person)
+;      '(("LikesChocolate" "Age" "Name")
+;        (#t 20 "David")
+;        (#t 30 "Jen")
+;        (#f 100 "Paul")))
+;
+;;; reordering columns on empty tuple table
+;(test (SELECT '("LikesChocolate" "Age" "Name") FROM Empty)
+;      '(("LikesChocolate" "Age" "Name")
+;        ))
+;
+;;; Select creates duplicates
+;(test (SELECT '("Name") FROM Teaching)
+;      '(("Name")
+;        ("David")
+;        ("Paul")
+;        ("David")))
+;;
+;;; Select given a literal table
+;(test
+; (SELECT '("A" "B")
+;   FROM '(("C" "A" "B" "D")
+;          (1 "Hi" 5 #t)
+;          (2 "Bye" 5 #f)
+;          (3 "Hi" 10 #t)))
+; '(("A" "B")
+;   ("Hi" 5)
+;   ("Bye" 5)
+;   ("Hi" 10))
+;)
+;
+;
+;; Select all from two product of two tables
+;(test (SELECT * FROM [Person "P"] [Teaching "T"])
+;      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+;        ("David" 20 #t "David" "CSC324")
+;        ("David" 20 #t "Paul" "CSC108")
+;        ("David" 20 #t "David" "CSC343")
+;        ("Jen" 30 #t "David" "CSC324")
+;        ("Jen" 30 #t "Paul" "CSC108")
+;        ("Jen" 30 #t "David" "CSC343")
+;        ("Paul" 100 #f "David" "CSC324")
+;        ("Paul" 100 #f "Paul" "CSC108")
+;        ("Paul" 100 #f "David" "CSC343")))
+;
+;;; Select all from two product of three tables
+;(test (SELECT * FROM [Person "P"] [Teaching "T"] [Person "D"])
+;      '(("P.Name" "P.Age" "P.LikesChocolate" "T.Name" "Course" "D.Name" "D.Age" "D.LikesChocolate")
+;        ("David" 20 #t "David" "CSC324" "David" 20 #t)
+;        ("David" 20 #t "David" "CSC324" "Jen" 30 #t)
+;        ("David" 20 #t "David" "CSC324" "Paul" 100 #f)
+;        ("David" 20 #t "Paul" "CSC108" "David" 20 #t)
+;        ("David" 20 #t "Paul" "CSC108" "Jen" 30 #t)
+;        ("David" 20 #t "Paul" "CSC108" "Paul" 100 #f)
+;        ("David" 20 #t "David" "CSC343" "David" 20 #t)
+;        ("David" 20 #t "David" "CSC343" "Jen" 30 #t)
+;        ("David" 20 #t "David" "CSC343" "Paul" 100 #f)
+;        ("Jen" 30 #t "David" "CSC324" "David" 20 #t)
+;        ("Jen" 30 #t "David" "CSC324" "Jen" 30 #t)
+;        ("Jen" 30 #t "David" "CSC324" "Paul" 100 #f)
+;        ("Jen" 30 #t "Paul" "CSC108" "David" 20 #t)
+;        ("Jen" 30 #t "Paul" "CSC108" "Jen" 30 #t)
+;        ("Jen" 30 #t "Paul" "CSC108" "Paul" 100 #f)
+;        ("Jen" 30 #t "David" "CSC343" "David" 20 #t)
+;        ("Jen" 30 #t "David" "CSC343" "Jen" 30 #t)
+;        ("Jen" 30 #t "David" "CSC343" "Paul" 100 #f)
+;        ("Paul" 100 #f "David" "CSC324" "David" 20 #t)
+;        ("Paul" 100 #f "David" "CSC324" "Jen" 30 #t)
+;        ("Paul" 100 #f "David" "CSC324" "Paul" 100 #f)
+;        ("Paul" 100 #f "Paul" "CSC108" "David" 20 #t)
+;        ("Paul" 100 #f "Paul" "CSC108" "Jen" 30 #t)
+;        ("Paul" 100 #f "Paul" "CSC108" "Paul" 100 #f)
+;        ("Paul" 100 #f "David" "CSC343" "David" 20 #t)
+;        ("Paul" 100 #f "David" "CSC343" "Jen" 30 #t)
+;        ("Paul" 100 #f "David" "CSC343" "Paul" 100 #f)
+;      )
+;)
+;
+;
+;; Select some from two tables
+;(test (SELECT '("P.Name" "Course" "Age") FROM [Person "P"] [Teaching "T"])
+;      '(("P.Name" "Course" "Age")
+;        ("David" "CSC324" 20)
+;        ("David" "CSC108" 20)
+;        ("David" "CSC343" 20)
+;        ("Jen" "CSC324" 30)
+;        ("Jen" "CSC108" 30)
+;        ("Jen" "CSC343" 30)
+;        ("Paul" "CSC324" 100)
+;        ("Paul" "CSC108" 100)
+;        ("Paul" "CSC343" 100)))
+;;
+;;; Take the product of a table with itself
+;(test (SELECT '("E.Course" "E1.Course") FROM [Teaching "E1"] [Teaching "E"])
+;      '(("E.Course" "E1.Course")
+;        ("CSC324" "CSC324")
+;        ("CSC108" "CSC324")
+;        ("CSC343" "CSC324")
+;        ("CSC324" "CSC108")
+;        ("CSC108" "CSC108")
+;        ("CSC343" "CSC108")
+;        ("CSC324" "CSC343")
+;        ("CSC108" "CSC343")
+;        ("CSC343" "CSC343")))
+;;
+;;; Take the product of a literal table with an identifier
+;(test
+; (SELECT *
+;   FROM ['(("Age" "A" "Name" "D")
+;           (1 "Hi" 5 #t)
+;           (2 "Bye" 5 #f)
+;           (3 "Hi" 10 #t))
+;         "T1"]
+;        [Person "T2"])
+; '(("T1.Age" "A" "T1.Name" "D" "T2.Name" "T2.Age" "LikesChocolate")
+;   (1 "Hi" 5 #t "David" 20 #t)
+;   (1 "Hi" 5 #t "Jen" 30 #t)
+;   (1 "Hi" 5 #t "Paul" 100 #f)
+;   (2 "Bye" 5 #f "David" 20 #t)
+;   (2 "Bye" 5 #f "Jen" 30 #t)
+;   (2 "Bye" 5 #f "Paul" 100 #f)
+;   (3 "Hi" 10 #t "David" 20 #t)
+;   (3 "Hi" 10 #t "Jen" 30 #t)
+;   (3 "Hi" 10 #t "Paul" 100 #f)))
 
 
 ;; ---- WHERE ----
@@ -370,11 +370,11 @@ and your TAs will appreciate it!
 ;        (#t "Jen")))
 ;
 ;; Condition as function of one attribute, select all
-;(test (SELECT *
-;        FROM Person
-;        WHERE (< 50 "Age"))
-;      '(("Name" "Age" "LikesChocolate")
-;        ("Paul" 100 #f)))
+(test (SELECT *
+        FROM Person
+        WHERE (< 50 "Age"))
+      '(("Name" "Age" "LikesChocolate")
+        ("Paul" 100 #f)))
 
 ;f((< 50 "Age")) ==> nope, lets call it with the rest of the list
 ;
@@ -387,11 +387,6 @@ and your TAs will appreciate it!
         WHERE (> "Age" 50))
       '(("Name" "Age" "LikesChocolate")
         ("Paul" 100 #f)))
-
-;(test (replace (> "Age" 50) Person)
-;
-;
-;)
 
 
 ;(test (SELECT *

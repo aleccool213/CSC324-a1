@@ -294,7 +294,7 @@ A function 'replace-attr' that takes:
 (define (replace-attr x attributes)
   (lambda (tuple)
     (if
-      (> (index-in-list attributes x) 0)
+      (> (index-in-list attributes x) -1)
       (list-ref tuple (index-in-list attributes x))
       x
     )
@@ -320,39 +320,55 @@ A function 'replace-attr' that takes:
 |#
 (define-syntax replace
   (syntax-rules ()
-    ; The recursive step, when given a compound expression
     [
-      (replace (expr ...) table)
-      ; need to find attribute
+      (replace (expr attr ...) table)
       (cond
-        ; if procedure, we need to find args
         [
           (procedure?
-            (first (list expr ...))
+            expr
           )
-          ;(lambda (x)
-          ;  (display (rest (list expr ...)))
-          ;)
           (replace-attr-expression
-            (replace (rest (list expr ...)) table)
+            (replace (attr ...) table)
             (lambda (x)
-              ((first (list expr ...)) x 50)
+              (expr x attr ...)
             )
           )
         ]
         [
           (>
-            (index-in-list (attributes table) (first (list expr ...)))
-            0
+            (index-in-list
+              (attributes table)
+              expr
+            )
+            -1
           )
           (replace-attr
-            (first (list expr ...))
+            expr
+            (attributes table)
+          )
+        ]
+        [else (replace (attr ...) table)]
+      )
+    ]
+    [
+      (replace (attr ...) table)
+      (
+        [
+          (>
+            (index-in-list
+              (attributes table)
+              (first (list attr ...))
+            )
+            -1
+          )
+          (replace-attr
+            (first (list attr ...))
             (attributes table)
           )
         ]
       )
     ]
-    ; The base case, when given just an atom. This is easier!
+    ; The base case, when given just an atom.
     [
       (replace atom table)
       (replace-attr
@@ -399,15 +415,12 @@ A function 'replace-attr' that takes:
         ]
         [
           (equal? (id->string <attrs>) "*")
-          (filter-tuples
-            <table>
-            (tuple-statisfy
-              (replace
-                <where-attr>
-                <table>
-              )
+          (tuple-statisfy
+            (replace
+              <where-attr>
               <table>
             )
+            <table>
           )
         ]
       )
