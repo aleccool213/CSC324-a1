@@ -48,7 +48,8 @@ Alec Brunelle, brunell3, 999241315
          join-attrs
          tuple-statisfy
          replace-attr
-         where-helper)
+         where-helper
+         replace)
 
 ; Part 0: Semantic aliases
 
@@ -315,31 +316,64 @@ A function 'replace-attr' that takes:
   Replaces the where clause with whatever attribute is inside it.
   Example: (< 50 "Age")
 
-  Returns the same table but with tuples having the where clause in place
-  of the corresponding attribute
-  Example:
-  '(("Name" "Age" "LikesChocolate")
-    ("Paul" (< 50 100) #f))
+
 |#
 (define-syntax replace
   (syntax-rules ()
     ; The recursive step, when given a compound expression
     [
       (replace (expr ...) table)
-      ; Change this!
-      (replace-attr
-        expr
-        (attributes table)
+      ; need to find attribute
+      (cond
+        ; if procedure, we need to find args
+        [
+          (procedure?
+            (first (list expr ...))
+          )
+          ;(lambda (x)
+          ;  (display (rest (list expr ...)))
+          ;)
+          (replace-attr-expression
+            (replace (rest (list expr ...)) table)
+            (lambda (x)
+              ((first (list expr ...)) x 50)
+            )
+          )
+        ]
+        [
+          (>
+            (index-in-list (attributes table) (first (list expr ...)))
+            0
+          )
+          (replace-attr
+            (first (list expr ...))
+            (attributes table)
+          )
+        ]
       )
     ]
     ; The base case, when given just an atom. This is easier!
     [
       (replace atom table)
-      atom
+      (replace-attr
+        atom
+        (attributes table)
+      )
     ]
   )
 )
 
+#|
+  f: a function which takes a tuple and returns the right value
+  expression: an expression which should accept one value and return a boolean
+|#
+(define (replace-attr-expression f expression)
+  (lambda (tuple)
+    (expression
+      (f tuple)
+    )
+  )
+)
 
 #|
 (define-syntax SELECT)
@@ -367,7 +401,13 @@ A function 'replace-attr' that takes:
           (equal? (id->string <attrs>) "*")
           (filter-tuples
             <table>
-            <where-attr>
+            (tuple-statisfy
+              (replace
+                <where-attr>
+                <table>
+              )
+              <table>
+            )
           )
         ]
       )
