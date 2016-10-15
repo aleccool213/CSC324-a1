@@ -47,7 +47,8 @@ Alec Brunelle, brunell3, 999241315
          index-in-list
          join-attrs
          tuple-statisfy
-         replace-attr)
+         replace-attr
+         where-helper)
 
 ; Part 0: Semantic aliases
 
@@ -244,16 +245,19 @@ Alec Brunelle, brunell3, 999241315
       )
     ]
     [
-      (SELECT <attrs> FROM <table> WHERE <where-attrs> ...)
+      (SELECT <attrs> FROM <table> WHERE <where-attr>)
       (cond
         [(empty? <attrs>) '()]
         [
           (list? <attrs>)
-          (append (list <attrs>) (select-query (filter-tuples <table> <where-attrs> ...) <attrs>))
+          (append (list <attrs>) (select-query (filter-tuples <table> <where-attr>) <attrs>))
         ]
         [
           (equal? (id->string <attrs>) "*")
-          (filter-tuples <table> <where-attrs> ...)
+          (filter-tuples
+            <table>
+            (quote <where-attr>)
+          )
         ]
       )
     ]
@@ -302,21 +306,43 @@ Alec Brunelle, brunell3, 999241315
   )
 )
 
+
+#|
+  find-attribute
+
+  clause: a clause which is found in the WHERE pred
+  attributes:
+|#
+(define (find-attribute clause attributes)
+  (cond
+    ;regular attribute
+    [(> (index-in-list attributes clause) 0) clause]
+    ;quoted function, need to find which attribute is in it
+    [
+      ;find which attribute is in this func
+      ()
+    ]
+  )
+)
 #|
   filter-tuples
 
   table: a valid table
-  where-clauses: a list of ether strings or functions
+  where-clauses: ether a string or a function
 
   note: functions must have string-literals corresponding to attributes
 
   returns: a table where tuples must satisfy (equal? <attribute-in-tuple> #t)
   or satisfy the function
 |#
-(define (filter-tuples table where-clauses)
-  ; is the third item in the list #t?
+(define (filter-tuples table where-clause)
   (tuple-statisfy
-    (replace-attr where-clauses (attributes table))
+    (replace-attr
+      ; find what value is in the where-clause, eg. (> 50 "Age") === "Age
+      ; can use string-replace, or string-split
+      (find-attribute where-clause (attributes table))
+      (attributes table)
+    )
     table
   )
 )
@@ -331,6 +357,9 @@ A function that takes:
 
   and returns the value of the tuple corresponding to that attribute.
 |#
+(define (where-helper attributes string tuple)
+  (list-ref tuple (index-in-list attributes string))
+)
 
 #|
 A function that takes:
@@ -379,4 +408,24 @@ A function 'replace-attr' that takes:
      (symbol->string (quote <id>))
    ]
  )
+)
+
+#|
+  was told by the TA in office hours to use this lol
+|#
+(define-syntax replace
+  (syntax-rules ()
+    ; The recursive step, when given a compound expression
+    [
+      (replace (expr ...) table)
+      ; Change this!
+      (void)
+    ]
+    ; The base case, when given just an atom. This is easier!
+    [
+      (replace atom table)
+      ; Change this!
+      (void)
+    ]
+  )
 )

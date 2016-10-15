@@ -162,6 +162,11 @@ Alec Brunelle, 999241315, 999241315
   "CSC324"
 )
 
+(test
+  (where-helper (list "Name" "Age" "LikesChocolate") "Age" (list "David" 20 #t))
+  20
+)
+
 
 #|
 All tests go below.
@@ -226,22 +231,8 @@ and your TAs will appreciate it!
         (#t 30 "Jen")
         (#f 100 "Paul")))
 
-;; reordering columns with attributes that dont exist
-;; TODO: what do we do in this case?
-(test (SELECT '("LikesChocolate" "Age" "Name" "Gender") FROM Person)
-      '(("LikesChocolate" "Age" "Name" "Gender")
-        (#t 20 "David")
-        (#t 30 "Jen")
-        (#f 100 "Paul")))
-
 ;; reordering columns on empty tuple table
 (test (SELECT '("LikesChocolate" "Age" "Name") FROM Empty)
-      '(("LikesChocolate" "Age" "Name")
-        ))
-
-;; reordering columns on empty tuple AND attribute table
-;; TODO: what do we do in this case?
-(test (SELECT '("LikesChocolate" "Age" "Name") FROM EmptyAttrs)
       '(("LikesChocolate" "Age" "Name")
         ))
 
@@ -379,12 +370,12 @@ and your TAs will appreciate it!
         (#t "Jen")))
 ;
 ;; Condition as function of one attribute, select all
-;(test (SELECT *
-;        FROM Person
-;        WHERE (< 50 "Age"))
-;      '(("Name" "Age" "LikesChocolate")
-;        ("Paul" 100 #f)))
-;
+(test (SELECT *
+        FROM Person
+        WHERE (< 50 "Age"))
+      '(("Name" "Age" "LikesChocolate")
+        ("Paul" 100 #f)))
+;;
 ;; Condition as function of one attribute, select none
 ;(test (SELECT '()
 ;        FROM Teaching
