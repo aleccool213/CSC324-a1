@@ -229,6 +229,117 @@ Alec Brunelle, brunell3, 999241315
   )
 )
 
+#|
+  filter-tuples
+
+  table: a valid table
+  where-clauses: ether a string or a function
+
+  note: functions must have string-literals corresponding to attributes
+
+  returns: a table where tuples must satisfy (equal? <attribute-in-tuple> #t)
+  or satisfy the function
+|#
+(define (filter-tuples table where-clause)
+  (tuple-statisfy
+    (replace-attr
+      where-clause
+      (attributes table)
+    )
+    table
+  )
+)
+
+; Part I "WHERE" helpers; you may or may not wish to implement these.
+
+#|
+A function that takes:
+  - f: a unary function that takes a tuple and returns a boolean value
+  - table: a valid table
+
+  and returns a new table containing only the tuples in 'table'
+  that satisfy 'f'.
+|#
+(define (tuple-statisfy f table)
+  (append
+    (list (attributes table))
+    (foldl
+      (lambda (current-tuple result)
+        (append
+          result
+          (if
+            (f current-tuple)
+            (list current-tuple)
+            '()
+          )
+        )
+      )
+      '()
+      (tuples table)
+    )
+  )
+)
+
+#|
+A function 'replace-attr' that takes:
+  - x
+  - a list of attributes
+
+  and returns a function 'f' which takes a tuple and does the following:
+    - If 'x' is in the list of attributes, return the corrresponding value
+      in the tuple.
+    - Otherwise, just ignore the tuple and return 'x'.
+|#
+(define (replace-attr x attributes)
+  (lambda (tuple)
+    (if
+      (> (index-in-list attributes x) 0)
+      (list-ref tuple (index-in-list attributes x))
+      x
+    )
+  )
+)
+
+(define-syntax id->string
+ (syntax-rules ()
+   [
+     (id->string <id>)
+     (symbol->string (quote <id>))
+   ]
+ )
+)
+
+#|
+  replace
+
+  Replaces the where clause with whatever attribute is inside it.
+  Example: (< 50 "Age")
+
+  Returns the same table but with tuples having the where clause in place
+  of the corresponding attribute
+  Example:
+  '(("Name" "Age" "LikesChocolate")
+    ("Paul" (< 50 100) #f))
+|#
+(define-syntax replace
+  (syntax-rules ()
+    ; The recursive step, when given a compound expression
+    [
+      (replace (expr ...) table)
+      ; Change this!
+      (replace-attr
+        expr
+        (attributes table)
+      )
+    ]
+    ; The base case, when given just an atom. This is easier!
+    [
+      (replace atom table)
+      atom
+    ]
+  )
+)
+
 
 #|
 (define-syntax SELECT)
@@ -256,7 +367,7 @@ Alec Brunelle, brunell3, 999241315
           (equal? (id->string <attrs>) "*")
           (filter-tuples
             <table>
-            (quote <where-attr>)
+            <where-attr>
           )
         ]
       )
@@ -306,49 +417,7 @@ Alec Brunelle, brunell3, 999241315
   )
 )
 
-
-#|
-  find-attribute
-
-  clause: a clause which is found in the WHERE pred
-  attributes:
-|#
-(define (find-attribute clause attributes)
-  (cond
-    ;regular attribute
-    [(> (index-in-list attributes clause) 0) clause]
-    ;quoted function, need to find which attribute is in it
-    [
-      ;find which attribute is in this func
-      ()
-    ]
-  )
-)
-#|
-  filter-tuples
-
-  table: a valid table
-  where-clauses: ether a string or a function
-
-  note: functions must have string-literals corresponding to attributes
-
-  returns: a table where tuples must satisfy (equal? <attribute-in-tuple> #t)
-  or satisfy the function
-|#
-(define (filter-tuples table where-clause)
-  (tuple-statisfy
-    (replace-attr
-      ; find what value is in the where-clause, eg. (> 50 "Age") === "Age
-      ; can use string-replace, or string-split
-      (find-attribute where-clause (attributes table))
-      (attributes table)
-    )
-    table
-  )
-)
-
-; Part I "WHERE" helpers; you may or may not wish to implement these.
-
+;====== DONT THINK ILL USE THIS =====
 #|
 A function that takes:
   - a list of attributes
@@ -359,73 +428,4 @@ A function that takes:
 |#
 (define (where-helper attributes string tuple)
   (list-ref tuple (index-in-list attributes string))
-)
-
-#|
-A function that takes:
-  - f: a unary function that takes a tuple and returns a boolean value
-  - table: a valid table
-
-  and returns a new table containing only the tuples in 'table'
-  that satisfy 'f'.
-|#
-(define (tuple-statisfy f table)
-  (append
-    (list (attributes table))
-    (foldl
-      (lambda (current-tuple result)
-        (append
-          result
-          (if (f current-tuple) (list current-tuple) '())
-        )
-      )
-      '()
-      (tuples table)
-    )
-  )
-)
-
-#|
-A function 'replace-attr' that takes:
-  - x
-  - a list of attributes
-
-  and returns a function 'f' which takes a tuple and does the following:
-    - If 'x' is in the list of attributes, return the corrresponding value
-      in the tuple.
-    - Otherwise, just ignore the tuple and return 'x'.
-|#
-(define (replace-attr x attributes)
-  (lambda (tuple)
-    (if (> (index-in-list attributes x) 0) (list-ref tuple (index-in-list attributes x)) x)
-  )
-)
-
-(define-syntax id->string
- (syntax-rules ()
-   [
-     (id->string <id>)
-     (symbol->string (quote <id>))
-   ]
- )
-)
-
-#|
-  was told by the TA in office hours to use this lol
-|#
-(define-syntax replace
-  (syntax-rules ()
-    ; The recursive step, when given a compound expression
-    [
-      (replace (expr ...) table)
-      ; Change this!
-      (void)
-    ]
-    ; The base case, when given just an atom. This is easier!
-    [
-      (replace atom table)
-      ; Change this!
-      (void)
-    ]
-  )
 )
