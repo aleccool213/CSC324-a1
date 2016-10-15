@@ -389,8 +389,7 @@ and your TAs will appreciate it!
         ("Paul" 100 #f)))
 
 ;(test (replace (> "Age" 50) Person)
-;
-;
+;  "HI"
 ;)
 
 
