@@ -374,7 +374,8 @@ and your TAs will appreciate it!
         FROM Person
         WHERE (< 50 "Age"))
       '(("Name" "Age" "LikesChocolate")
-        ("Paul" 100 #f)))
+        ("Paul" 100 #f))
+)
 
 (test (SELECT *
         FROM Person
@@ -392,36 +393,38 @@ and your TAs will appreciate it!
 ;)
 ;;
 ;; Condition as function of one attribute, select none
-;(test (SELECT '()
-;        FROM Teaching
-;        WHERE (equal? "Name" "David"))
-;      '(()
-;        ()
-;        ()))
+(test (SELECT '()
+        FROM Teaching
+        WHERE (equal? "Name" "David"))
+      '(()
+        ()
+        ())
+)
 ;
 ;; Constant true condition
-;(test (SELECT *
-;        FROM Person
-;        WHERE #t)
-;      Person)
+(test (SELECT *
+        FROM Person
+        WHERE #t)
+      Person)
 ;
 ;; Constant false compound condition
-;(test (SELECT *
-;        FROM Person
-;        WHERE (> (string-length "David") 20))
-;      '(("Name" "Age" "LikesChocolate")))
-;
+(test (SELECT *
+        FROM Person
+        WHERE (> (string-length "David") 20))
+      '(("Name" "Age" "LikesChocolate")))
+
 ;; Condition on a literal table
-;(test (SELECT '("C" "B")
-;        FROM '(("A" "B" "C")
-;               (1 2 3)
-;               (3 10 40)
-;               (4 4 4)
-;               (2 3 -1))
-;        WHERE (odd? "A"))
-;      '(("C" "B")
-;        (3 2)
-;        (40 10)))
+(test (SELECT '("C" "B")
+        FROM '(("A" "B" "C")
+               (1 2 3)
+               (3 10 40)
+               (4 4 4)
+               (2 3 -1))
+        WHERE (odd? "A"))
+      '(("C" "B")
+        (3 2)
+        (40 10))
+)
 ;
 ;; Simple condition on joined tables
 ;(test (SELECT *

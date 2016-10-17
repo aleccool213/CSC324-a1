@@ -338,6 +338,20 @@ A function 'replace-attr' that takes:
       )
     ]
     [
+      (replace (expr attr) table)
+      (lambda (tuple)
+        (expr
+          (
+            (replace-attr
+              attr
+              (attributes table)
+            )
+            tuple
+          )
+        )
+      )
+    ]
+    [
       (replace atom table)
       (replace-attr
         atom
@@ -379,7 +393,19 @@ A function 'replace-attr' that takes:
         [(empty? <attrs>) '()]
         [
           (list? <attrs>)
-          (append (list <attrs>) (select-query (filter-tuples <table> <where-attr>) <attrs>))
+          (append
+            (list <attrs>)
+            (select-query
+              (filter-table
+                (replace
+                  <where-attr>
+                  <table>
+                )
+                <table>
+              )
+              <attrs>
+            )
+          )
         ]
         [
           (equal? (id->string <attrs>) "*")
