@@ -46,7 +46,7 @@ Alec Brunelle, brunell3, 999241315
          SELECT
          index-in-list
          join-attrs
-         tuple-statisfy
+         filter-table
          replace-attr
          where-helper
          replace)
@@ -242,7 +242,7 @@ Alec Brunelle, brunell3, 999241315
   or satisfy the function
 |#
 (define (filter-tuples table where-clause)
-  (tuple-statisfy
+  (filter-table
     (replace-attr
       where-clause
       (attributes table)
@@ -254,6 +254,8 @@ Alec Brunelle, brunell3, 999241315
 ; Part I "WHERE" helpers; you may or may not wish to implement these.
 
 #|
+filter-table
+
 A function that takes:
   - f: a unary function that takes a tuple and returns a boolean value
   - table: a valid table
@@ -261,7 +263,7 @@ A function that takes:
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
 |#
-(define (tuple-statisfy f table)
+(define (filter-table f table)
   (append
     (list (attributes table))
     (foldl
@@ -313,62 +315,28 @@ A function 'replace-attr' that takes:
 #|
   replace
 
-  Replaces the where clause with whatever attribute is inside it.
-  Example: (< 50 "Age")
+  Maybe: Replaces attributes in an expression with values from a tuple.
 
-
+  Returns a function which when given a tuple:
+    -
 |#
 (define-syntax replace
   (syntax-rules ()
     [
       (replace (expr attr ...) table)
-      (cond
-        [
-          (procedure?
-            expr
-          )
-          (replace-attr-expression
-            (replace (attr ...) table)
-            (lambda (x)
-              (expr x attr ...)
-            )
-          )
-        ]
-        [
-          (>
-            (index-in-list
+      (lambda (tuple)
+        (expr
+          (
+            (replace-attr
+              attr
               (attributes table)
-              expr
             )
-            -1
+            tuple
           )
-          (replace-attr
-            expr
-            (attributes table)
-          )
-        ]
-        [else (replace (attr ...) table)]
+          ...
+        )
       )
     ]
-    [
-      (replace (attr ...) table)
-      (
-        [
-          (>
-            (index-in-list
-              (attributes table)
-              (first (list attr ...))
-            )
-            -1
-          )
-          (replace-attr
-            (first (list attr ...))
-            (attributes table)
-          )
-        ]
-      )
-    ]
-    ; The base case, when given just an atom.
     [
       (replace atom table)
       (replace-attr
@@ -415,7 +383,7 @@ A function 'replace-attr' that takes:
         ]
         [
           (equal? (id->string <attrs>) "*")
-          (tuple-statisfy
+          (filter-table
             (replace
               <where-attr>
               <table>
