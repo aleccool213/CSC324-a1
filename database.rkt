@@ -157,7 +157,7 @@ Alec Brunelle, brunell3, 999241315
   tables-char-id-pairs: list of table, char-id pairs
 
   Returns a list of joined attributes from all of the tables in the order
-  in which it was inputted. If duplicates arise, it use the char-id of the table
+  in which it was inputted. If duplicates arise, it uses the char-id of the table
   to uniquely id itself.
 |#
 (define (join-attrs tables char-ids)
@@ -284,6 +284,33 @@ A function that takes:
 )
 
 #|
+  sort-table
+
+  f: a function which is used to get the sort key
+  table: a valid table
+
+  Returns a table sorted by attribute given in f.
+  Sorts the tables tuples in non-ascending order.
+
+|#
+(define (sort-table f table)
+  (append
+    (list (attributes table))
+    (sort
+      (tuples table)
+      #:key f
+      (lambda (a b)
+        (cond
+          [(> a b) #t]
+          ;[(= a b) #t]
+          [else #f]
+        )
+      )
+    )
+  )
+)
+
+#|
 A function 'replace-attr' that takes:
   - x
   - a list of attributes
@@ -315,21 +342,19 @@ A function 'replace-attr' that takes:
 #|
   replace
 
-  Maybe: Replaces attributes in an expression with values from a tuple.
-
-  Returns a function which when given a tuple:
+  Returns a function which when given a tuple.
     -
 |#
 (define-syntax replace
   (syntax-rules ()
     [
-      (replace (expr attr ...) table)
+      (replace (expr attr ...) table-attributes)
       (lambda (tuple)
         (expr
           (
             (replace-attr
               attr
-              (attributes table)
+              table-attributes
             )
             tuple
           )
@@ -338,13 +363,13 @@ A function 'replace-attr' that takes:
       )
     ]
     [
-      (replace (expr attr) table)
+      (replace (expr attr) table-attributes)
       (lambda (tuple)
         (expr
           (
             (replace-attr
               attr
-              (attributes table)
+              table-attributes
             )
             tuple
           )
@@ -352,10 +377,10 @@ A function 'replace-attr' that takes:
       )
     ]
     [
-      (replace atom table)
+      (replace atom table-attributes)
       (replace-attr
         atom
-        (attributes table)
+        table-attributes
       )
     ]
   )
@@ -369,6 +394,22 @@ A function 'replace-attr' that takes:
   (lambda (tuple)
     (expression
       (f tuple)
+    )
+  )
+)
+
+
+;; helper
+(define (joined-table list-of-tables list-of-attrs)
+  (append
+    (list
+      (join-attrs
+        list-of-tables
+        list-of-attrs
+      )
+    )
+    (join-table
+      list-of-tables
     )
   )
 )
@@ -394,12 +435,14 @@ A function 'replace-attr' that takes:
         [
           (list? <attrs>)
           (append
+            ;attrs
             (list <attrs>)
+            ;tuples
             (select-query
               (filter-table
                 (replace
                   <where-attr>
-                  <table>
+                  (attributes <table>)
                 )
                 <table>
               )
@@ -412,7 +455,7 @@ A function 'replace-attr' that takes:
           (filter-table
             (replace
               <where-attr>
-              <table>
+              (attributes <table>)
             )
             <table>
           )
@@ -426,37 +469,215 @@ A function 'replace-attr' that takes:
         [
           (list? <attrs>)
           (append
+            ;attrs
             (list <attrs>)
+            ;tuples
             (select-query
-              (append
-                (list
-                  (join-attrs
-                    (list <table> ...)
-                    (list <char-id> ...)
-                  )
-                )
-                (join-table
-                  (list <table> ...)
-                )
+              (joined-table
+                (list <table> ...)
+                (list <char-id> ...)
               )
               <attrs>
             )
           )
         ]
-        ;; attributes are joined together, duplicates are changed to
-        ;; <char-id>.<attribute-name>
         [
           (equal? (id->string <attrs>) "*")
+          (joined-table
+            (list <table> ...)
+            (list <char-id> ...)
+          )
+        ]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM [<table> <char-id>] ... WHERE <where-attr>)
+      (cond
+        [
+          (list? <attrs>)
+        ]
+        [
+          (equal? (id->string <attrs>) "*")
+          (filter-table
+            (replace
+              <where-attr>
+              (join-attrs
+                (list <table> ...)
+                (list <char-id> ...)
+              )
+            )
+            (joined-table
+              (list <table> ...)
+              (list <char-id> ...)
+            )
+          )
+        ]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM <table> ORDER BY <order-by-attr>)
+      (cond
+        [(empty? <attrs>) '()]
+        [
+          (list? <attrs>)
           (append
+            (list <attrs>)
+            (select-query
+              (sort-table
+                (replace-attr
+                  <order-by-attr>
+                  (attributes <table>)
+                )
+                <table>
+              )
+              <attrs>
+            )
+          )
+        ]
+        [
+          (equal? (id->string <attrs>) "*")
+          (sort-table
+            (replace
+              <order-by-attr>
+              (attributes <table>)
+            )
+            <table>
+          )
+        ]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM [<table> <char-id>] ... ORDER BY <order-by-attr>)
+      (cond
+        [(empty? <attrs>) '()]
+        [
+          (list? <attrs>)
+          (append
+            ;attrs
             (list
               (join-attrs
                 (list <table> ...)
                 (list <char-id> ...)
               )
             )
-            (join-table
-              (list <table> ...)
+            ;tuples
+            (select-query
+              (sort-table
+                (replace
+                  <order-by-attr>
+                  (join-attrs
+                    (list <table> ...)
+                    (list <char-id> ...)
+                  )
+                )
+                (joined-table
+                  (list <table> ...)
+                  (list <char-id> ...)
+                )
+              )
+              <attrs>
             )
+          )
+        ]
+        [
+          (equal? (id->string <attrs>) "*")
+          (sort-table
+            (replace
+              <order-by-attr>
+              (join-attrs
+                (list <table> ...)
+                (list <char-id> ...)
+              )
+            )
+            (joined-table
+              (list <table> ...)
+              (list <char-id> ...)
+            )
+          )
+        ]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM <table> WHERE <where-attr> ORDER BY <order-by-attr>)
+      (cond
+        [(empty? <attrs>) '()]
+        [
+          (list? <attrs>)
+          (append
+            (list <attrs>)
+            (select-query
+              (sort-table
+                (replace
+                  <order-by-attr>
+                  (attributes <table>)
+                )
+                (filter-table
+                  (replace-attr
+                    <where-attr>
+                    (attributes <table>)
+                  )
+                  <table>
+                )
+              )
+              <attrs>
+            )
+          )
+        ]
+        [
+          (equal? (id->string <attrs>) "*")
+          (filter-table
+            (replace
+              <where-attr>
+              (attributes <table>)
+            )
+            (sort-table
+              (replace
+                <order-by-attr>
+                (attributes <table>)
+              )
+              <table>
+            )
+          )
+        ]
+      )
+    ]
+    [
+      (SELECT <attrs> FROM [<table> <char-id>] ... WHERE <where-attr> ORDER BY <order-by-attr>)
+      (cond
+        [(empty? <attrs>) '()]
+        [
+          (equal? (id->string <attrs>) "*")
+          (append
+            ;attrs
+            (list
+              (join-attrs
+                (list <table> ...)
+                (list <char-id> ...)
+              )
+            )
+            ;tuples
+            ;(sort-table
+            ;  (replace
+            ;    <order-by-attr>
+            ;    (join-attrs
+            ;      (list <table> ...)
+            ;      (list <char-id> ...)
+            ;    )
+            ;  )
+              (filter-table
+                (replace
+                  <where-attr>
+                  (join-attrs
+                    (list <table> ...)
+                    (list <char-id> ...)
+                  )
+                )
+                (joined-table
+                  (list <table> ...)
+                  (list <char-id> ...)
+                )
+              )
+            ;)
           )
         ]
       )
