@@ -35,6 +35,12 @@ Alec Brunelle, 999241315, 999241315
     ("Jen" 30 #t)
     ("Paul" 100 #f)))
 
+(define PersonDupTypes
+  '(("Name" "Age" "LikesChocolate" "Gender")
+    ("David" 20 #t #t)
+    ("Jen" 30 #t #t)
+    ("Paul" 100 #f #f)))
+
 (define Teaching
   '(("Name" "Course")
     ("David" "CSC324")
@@ -384,24 +390,35 @@ and your TAs will appreciate it!
         ("Paul" 100 #f))
 )
 
+;(test (SELECT *
+;        FROM PersonDupTypes
+;        WHERE (equal? "LikesChocolate" "Gender"))
+;      '(("Name" "Age" "LikesChocolate" "Gender")
+;        ("David" 20 #t #t)
+;        ("Jen" 30 #t #t))
+;)
 
 ;(test (SELECT *
 ;        FROM Person
-;        WHERE (and (> "Age" 50) (equal? "Name" "Paul")))
+;        WHERE (and
+;                #t
+;                (equal? "Name" "Paul")
+;              )
+;      )
 ;      '(("Name" "Age" "LikesChocolate")
 ;        ("Paul" 100 #f))
 ;)
 ;;
 ;; Condition as function of one attribute, select none
-(test (SELECT '()
-        FROM Teaching
-        WHERE (equal? "Name" "David"))
-      '(()
-        ()
-        ())
-)
+;(test (SELECT '()
+;        FROM Teaching
+;        WHERE (equal? "Name" "David"))
+;      '(()
+;        ()
+;        ())
+;)
 ;
-;; Constant true condition
+; Constant true condition
 (test (SELECT *
         FROM Person
         WHERE #t)
@@ -427,18 +444,18 @@ and your TAs will appreciate it!
 )
 ;
 ;; Simple condition on joined tables
-;(test (SELECT *
-;        FROM [Person "P"] [Teaching "T"]
-;        WHERE (equal? "P.Name" "T.Name"))
-;      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
-;        ("David" 20 #t "David" "CSC324")
-;        ("David" 20 #t "David" "CSC343")
-;        ("Paul" 100 #f "Paul" "CSC108")))
-;
-;; Compound condition on three joined tables
+(test (SELECT *
+        FROM [Person "P"] [Teaching "T"]
+        WHERE (equal? "P.Name" "T.Name"))
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        ("David" 20 #t "David" "CSC324")
+        ("David" 20 #t "David" "CSC343")
+        ("Paul" 100 #f "Paul" "CSC108"))
+)
+; Compound condition on three joined tables
 ;(test (SELECT '("P1.Name" "P1.LikesChocolate" "P.Age" "Course")
 ;        FROM [Person "P"] [Teaching "T"] [Person "P1"]
-;        WHERE (And "P.LikesChocolate" (equal? "P1.Name" "T.Name")))
+;        WHERE (and "P.LikesChocolate" (equal? "P1.Name" "T.Name")))
 ;      '(("P1.Name" "P1.LikesChocolate" "P.Age" "Course")
 ;        ("David" #t 20 "CSC324")
 ;        ("Paul" #f 20 "CSC108")
@@ -450,31 +467,32 @@ and your TAs will appreciate it!
 ;
 ;; ---- ORDER BY ----
 ;; Order by attribute
-;(test (SELECT *
-;        FROM Person
-;        ORDER BY "Age")
-;      '(("Name" "Age" "LikesChocolate")
-;        ("Paul" 100 #f)
-;        ("Jen" 30 #t)
-;        ("David" 20 #t)))
+(test (SELECT *
+        FROM Person
+        ORDER BY "Age")
+      '(("Name" "Age" "LikesChocolate")
+        ("Paul" 100 #f)
+        ("Jen" 30 #t)
+        ("David" 20 #t))
+)
 ;
 ;; Order by attribute, not selected
-;(test (SELECT '("Name")
-;        FROM Person
-;        ORDER BY "Age")
-;      '(("Name")
-;        ("Paul")
-;        ("Jen")
-;        ("David")))
+(test (SELECT '("Name")
+        FROM Person
+        ORDER BY "Age")
+      '(("Name")
+        ("Paul")
+        ("Jen")
+        ("David")))
 ;
 ;; Order by a function of an attribute
-;(test (SELECT *
-;        FROM Person
-;        ORDER BY (string-length "Name"))
-;      '(("Name" "Age" "LikesChocolate")
-;        ("David" 20 #t)
-;        ("Paul" 100 #f)
-;        ("Jen" 30 #t)))
+(test (SELECT *
+        FROM Person
+        ORDER BY (string-length "Name"))
+      '(("Name" "Age" "LikesChocolate")
+        ("David" 20 #t)
+        ("Paul" 100 #f)
+        ("Jen" 30 #t)))
 ;
 ;; Order with duplicate
 ;(test (SELECT *
@@ -486,56 +504,72 @@ and your TAs will appreciate it!
 ;        ("Paul" "CSC108")))
 ;
 ;; Order on a literal table
-;(test (SELECT *
-;        FROM '(("A" "B" "C")
-;               (1 2 3)
-;               (3 10 40)
-;               (4 4 4)
-;               (2 3 -1))
-;        ORDER BY "C")
-;      '(("A" "B" "C")
-;        (3 10 40)
-;        (4 4 4)
-;        (1 2 3)
-;        (2 3 -1)))
+(test (SELECT *
+        FROM '(("A" "B" "C")
+               (1 2 3)
+               (3 10 40)
+               (4 4 4)
+               (2 3 -1))
+        ORDER BY "C")
+      '(("A" "B" "C")
+        (3 10 40)
+        (4 4 4)
+        (1 2 3)
+        (2 3 -1)))
 ;
 ;; Order on two tables
-;(test (SELECT *
-;        FROM [Person "P"] [Teaching "T"]
-;        ORDER BY "Age")
-;      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
-;        ("Paul" 100 #f "David" "CSC324")
-;        ("Paul" 100 #f "Paul" "CSC108")
-;        ("Paul" 100 #f "David" "CSC343")
-;        ("Jen" 30 #t "David" "CSC324")
-;        ("Jen" 30 #t "Paul" "CSC108")
-;        ("Jen" 30 #t "David" "CSC343")
-;        ("David" 20 #t "David" "CSC324")
-;        ("David" 20 #t "Paul" "CSC108")
-;        ("David" 20 #t "David" "CSC343")))
-;
-;
+(test (SELECT *
+        FROM [Person "P"] [Teaching "T"]
+        ORDER BY "Age")
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        ("Paul" 100 #f "David" "CSC324")
+        ("Paul" 100 #f "Paul" "CSC108")
+        ("Paul" 100 #f "David" "CSC343")
+        ("Jen" 30 #t "David" "CSC324")
+        ("Jen" 30 #t "Paul" "CSC108")
+        ("Jen" 30 #t "David" "CSC343")
+        ("David" 20 #t "David" "CSC324")
+        ("David" 20 #t "Paul" "CSC108")
+        ("David" 20 #t "David" "CSC343")))
+
+(test (SELECT '("Age")
+        FROM [Person "P"] [Teaching "T"]
+        ORDER BY "Age")
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        (100)
+        (100)
+        (100)
+        (30)
+        (30)
+        (30)
+        (20)
+        (20)
+        (20)
+      )
+)
+
+
 ;; ---- ORDER BY and WHERE ----
 ;; Use attributes, select all
-;(test
-; (SELECT *
-;   FROM Person
-;   WHERE "LikesChocolate"
-;   ORDER BY "Age")
-; '(("Name" "Age" "LikesChocolate")
-;   ("Jen" 30 #t)
-;   ("David" 20 #t)))
+(test
+ (SELECT *
+   FROM Person
+   WHERE "LikesChocolate"
+   ORDER BY "Age")
+ '(("Name" "Age" "LikesChocolate")
+   ("Jen" 30 #t)
+   ("David" 20 #t)))
 ;
 ;; Use attributes, select one unused attribute
-;(test
-; (SELECT '("Name")
-;   FROM Person
-;   WHERE "LikesChocolate"
-;   ORDER BY "Age")
-; '(("Name")
-;   ("Jen")
-;   ("David")))
-;
+(test
+ (SELECT '("Name")
+   FROM Person
+   WHERE "LikesChocolate"
+   ORDER BY "Age")
+ '(("Name")
+   ("Jen")
+   ("David")))
+
 ;; Two joined tables, select all
 ;(test
 ; (SELECT *
